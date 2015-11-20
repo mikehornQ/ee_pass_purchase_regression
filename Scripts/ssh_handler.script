@@ -1,0 +1,79 @@
+﻿// ssh_handler - SSH handlers
+// M Horn
+// November 2015
+
+set global currentProc to empty
+set global defaultSSHendOfLine to "$"
+set global defaultSSHtimeout to 3 seconds
+
+put () into global handler_list
+
+to open_ssh ssh_params
+	set username to item 1 of ssh_params
+	set hostname to item 3 of ssh_params
+	set passwd to item 2 of ssh_params
+	
+	set my hoststring to "[username]@[hostname]"
+	replace "[username]" by username in my hoststring
+	replace "[hostname]" by hostname in my hoststring
+	
+	put number of items in global handler_list + 1 into nextproc
+	put merge("ssh#[[nextproc]]" ) into procID
+	insert procID after global handler_list
+	
+	put procID into global currentProc
+	
+	open process (procID) with options (parameters:(my hoststring, "-pw", passwd))
+	set sshOutput to getSSHOutputLine(global defaultSSHendOfLine)
+	put sshOutput
+end open_ssh
+
+to su su_params
+	set username to item 1 of su_params
+	set passwd to item 2 of su_params
+	
+	set su_command = global cmd_su 
+	replace "[userid]" with username in su_command
+	put "executing: " & su_command
+	sendSSHInputAndReturn(su_command, ":")
+	sendSSHInputAndReturn(passwd)
+end su
+
+to exit_shell
+	// exit su
+	sendSSHInputAndReturn(global cmd_exit)
+end exit_shell
+
+to close_ssh
+	exit_shell
+	close process (global currentProc)
+	delete the last item of global handler_list
+	put the last item of global handler_list into global currentProc	
+end close_ssh
+
+to getSSHOutput lineDelimeter
+	read from process (global currentProc) until lineDelimeter into sshOutput in (global defaultSSHtimeout)
+	return sshOutput
+end getSSHOutput
+
+function getSSHOutputLine endOfLine
+	return getSSHOutput (endOfLine)
+end getSSHOutputLine
+
+to sendSSHInput input
+	write input to process (global currentProc)
+end sendSSHInput
+
+to sendSSHInputAndReturn input
+	sendSSHInput(item 1 of input)
+	sendSSHInput(return)
+	
+	if number of items in input > 1 then
+		set endOfLine to item 2 of input
+	else
+		set endOfLine to global defaultSSHendOfLine
+	end if
+	
+	set sshOutput to getSSHOutputLine(endOfLine)
+	put sshOutput
+end sendSSHInputAndReturn

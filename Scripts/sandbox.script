@@ -1,0 +1,27 @@
+﻿load_commands
+ssh_handler
+
+ssh_handler.open_ssh ("automation", "QualiTest", "192.168.17.3")
+
+ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+
+ssh_handler.open_ssh ("testuser", "01LetMe1n", "192.168.17.3")
+
+ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+
+ssh_handler.close_ssh
+
+ssh_handler.close_ssh
+
+// ---------------------------------------------
+
+put () into my list
+insert "ssh#1" after my list
+
+insert "ssh#2" after my list
+
+put last item of my list 
+put number of items in my list + 1 into numprocs
+put merge("ssh#[[numprocs]]" )
+delete the last item of my list
+put last item of my list

@@ -1,0 +1,54 @@
+﻿// poc_test3_EE_PAYM004-HS_4 - pass expire by time
+// M Horn
+// November 2015
+
+load_commands
+ssh_handler
+
+put() into eol_list
+
+// establish SSH session to Slate
+ssh_handler.open_ssh ("testuser", "letmein", "10.249.4.54")
+// directory list to ensure we are connected
+ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+
+// establish SSH session to OTP
+ssh_handler.open_ssh ("adhill", "adhill546", "10.249.20.104")
+
+// Note: delimiter is now ">"
+insert global defaultSSHendOfLine after eol_list
+set global defaultSSHendOfLine to ">"
+
+// directory list to ensure we are connected
+ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+
+// su - core
+set su_username to "core"
+set su_password to "otpus3r."
+ssh_handler.su (su_username, su_password)
+// confirm we are now 'core' by checking current directory here
+ssh_handler.sendSSHInputAndReturn(global cmd_pwd)
+
+// navigate to ebdc_core
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
+
+// advance date on Pass by 24 hours
+
+// invoke shell
+-- end of line delimeter is ")" for this first command before reverting to ">"
+ssh_handler.sendSSHInputAndReturn(global cmd_erlang_shell, ")")
+ssh_handler.sendSSHInputAndReturn(global cmd_clear_buffer)
+ssh_handler.sendSSHInputAndReturn("{ok,PassInfo} = ebdc_pass:get_pass_data(""<Pass ID>"").")
+set my cmdline to "ebdc_pass:create_active_pass(<MSISDN>,PassInfo,""63599357556"",pass,{{2015,05,20},{16,12,36}},{{2015,05,29},{14,10,0}},'' HS_4GB'', pdf_test,[])."
+replace "<MSISDN>" by "7432990471" in my cmdline
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+// exit core
+ssh_handler.exit_shell
+
+// restore global defaultSSHendOfLine
+set global defaultSSHendOfLine to last item of eol_list
+delete last item of eol_list
+
+// close SSH session
+ssh_handler.close_ssh
