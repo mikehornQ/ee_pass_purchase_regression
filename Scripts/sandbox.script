@@ -7,6 +7,9 @@ ssh_handler.sendSSHInputAndReturn(global cmd_ls)
 
 ssh_handler.open_ssh ("testuser", "01LetMe1n", "192.168.17.3")
 
+load_commands
+ssh_handler
+ssh_handler.open_ssh ("adhill", "adhill546", "10.249.20.104")
 ssh_handler.sendSSHInputAndReturn(global cmd_ls)
 
 ssh_handler.close_ssh
@@ -25,3 +28,6 @@ put number of items in my list + 1 into numprocs
 put merge("ssh#[[numprocs]]" )
 delete the last item of my list
 put last item of my list
+
+// ---------------------------------------------
+

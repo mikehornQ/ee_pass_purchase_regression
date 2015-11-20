@@ -24,8 +24,8 @@ to open_ssh ssh_params
 	put procID into global currentProc
 	
 	open process (procID) with options (parameters:(my hoststring, "-pw", passwd))
-	set sshOutput to getSSHOutputLine(global defaultSSHendOfLine)
-	put sshOutput
+	set global sshOutput to getsshOutputLine(global defaultSSHendOfLine)
+	put global sshOutput
 end open_ssh
 
 to su su_params
@@ -36,7 +36,8 @@ to su su_params
 	replace "[userid]" with username in su_command
 	put "executing: " & su_command
 	sendSSHInputAndReturn(su_command, ":")
-	sendSSHInputAndReturn(passwd)
+	put "entering passwd:" & passwd
+	sendSSHInputAndReturn(passwd, ":")
 end su
 
 to exit_shell
@@ -51,14 +52,14 @@ to close_ssh
 	put the last item of global handler_list into global currentProc	
 end close_ssh
 
-to getSSHOutput lineDelimeter
-	read from process (global currentProc) until lineDelimeter into sshOutput in (global defaultSSHtimeout)
-	return sshOutput
-end getSSHOutput
+to getsshOutput lineDelimeter
+	read from process (global currentProc) until lineDelimeter into global sshOutput in (global defaultSSHtimeout)
+	return global sshOutput
+end getsshOutput
 
-function getSSHOutputLine endOfLine
-	return getSSHOutput (endOfLine)
-end getSSHOutputLine
+function getsshOutputLine endOfLine
+	return getsshOutput (endOfLine)
+end getsshOutputLine
 
 to sendSSHInput input
 	write input to process (global currentProc)
@@ -74,6 +75,6 @@ to sendSSHInputAndReturn input
 		set endOfLine to global defaultSSHendOfLine
 	end if
 	
-	set sshOutput to getSSHOutputLine(endOfLine)
-	put sshOutput
+	set global sshOutput to getsshOutputLine(endOfLine)
+	put global sshOutput
 end sendSSHInputAndReturn

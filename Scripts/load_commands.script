@@ -3,7 +3,7 @@
 // November 2015
 
 set global cmd_vt220 to "export TERM=vt220"
-set global cmd_ls to "\ls -a" -- We use \ls not ls to escape the aliased command on the shell.  Normally ls is aliased on a bash shell to provide colour, we don't need colour for what we're doing here, so we ignore it by using straight ls
+set global cmd_ls to "ls -a"
 set global cmd_su to "su - [userid]"
 set global cmd_text to "[text]"
 set global cmd_pwd to "pwd"

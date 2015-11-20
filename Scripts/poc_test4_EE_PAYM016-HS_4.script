@@ -1,4 +1,4 @@
-﻿// poc_test3_EE_PAYM004-HS_4 - pass expire by time
+﻿// poc_test4_EE_PAYM004-HS_4 - Stack usage check
 // M Horn
 // November 2015
 
@@ -13,7 +13,8 @@ ssh_handler.open_ssh ("testuser", "letmein", "10.249.4.54")
 ssh_handler.sendSSHInputAndReturn(global cmd_ls)
 
 // establish SSH session to OTP
-ssh_handler.open_ssh ("adhill", "adhill546", "10.249.20.104")
+ssh_handler.sendSSHInputAndReturn("ssh adhill@10.249.20.104")
+ssh_handler.sendSSHInputAndReturn( "adhill546", ":")
 
 // Note: delimiter is now ">"
 insert global defaultSSHendOfLine after eol_list
@@ -29,19 +30,15 @@ ssh_handler.su (su_username, su_password)
 // confirm we are now 'core' by checking current directory here
 ssh_handler.sendSSHInputAndReturn(global cmd_pwd)
 
-// navigate to ebdc_core
-ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
+// navigate to log directory
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core/app_logs")
+// extract entries for device under test
+set my cmdline to "grep ""<MSISDN>"" ebdc_event_log_*.audit.open > /tmp/epf_logfile_$PPID"
+replace "<MSISDN>" by "7432995033" in my cmdline
+ssh_handler.sendSSHInputAndReturn( my cmdline)
+// search for initialisation strings
+ssh_handler.sendSSHInputAndReturn("grep -c ""GX9T"" /tmp/epf_logfile_$PPID")
 
-// advance date on Pass by 24 hours
-
-// invoke shell
--- end of line delimeter is ")" for this first command before reverting to ">"
-ssh_handler.sendSSHInputAndReturn(global cmd_erlang_shell, ")")
-ssh_handler.sendSSHInputAndReturn(global cmd_clear_buffer)
-ssh_handler.sendSSHInputAndReturn("{ok,PassInfo} = ebdc_pass:get_pass_data(""<Pass ID>"").")
-set my cmdline to "ebdc_pass:create_active_pass(<MSISDN>,PassInfo,""63599357556"",pass,{{2015,05,20},{16,12,36}},{{2015,05,29},{14,10,0}},'' HS_4GB'', pdf_test,[])."
-replace "<MSISDN>" by "7432990471" in my cmdline
-ssh_handler.sendSSHInputAndReturn(my cmdline)
 
 // exit core
 ssh_handler.exit_shell
