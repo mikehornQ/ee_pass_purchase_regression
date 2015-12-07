@@ -1,0 +1,96 @@
+﻿// poc_test1_EE_PAYM001-HS_4 - Verify that EE-PAYM subscriber is assigned to uplink and downlink speed
+// M Horn
+// November 2015
+
+put() into eol_list
+
+Setup
+load_data
+load_commands
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+//
+// Step 1 - Establish PDP context for EE PAYM subscriber with HS_4GB customer type.
+//
+BeginTestCase POC1_Initialise
+
+// Reset usage to 4GB available
+ssh_handler.loadOTP "OTP"
+put conn_handler.Connect_Slate into log_procId_otp
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
+
+conn_handler.reset_subscriber
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+logsuccess "Initialsed"
+
+EndTestCase POC1_Initialise
+
+wait 30 seconds
+
+BeginTestCase POC1_Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+EndTestCase POC1_Establish_PDP_Context
+
+LogSuccess "PDP Context Established"
+
+//
+// Step 2 - Verify that subscriber is assigned with Uplink/DownLink speeds of 60MBps and 150MBps 
+//             by exercising Network Monitor Mini
+
+BeginTestCase POC1_Download_Data
+DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+
+screenutilities.searchTopQuarter()
+if ImageFound(Text:"D:", ContrastColor:(2,7,8), WaitFor:8, Contrast:"On") = False then
+	logerror "Unable to identify link speed. Exiting script"	
+end if
+
+put () into global dwnlds
+put () into global uplds
+
+put ImageRectangle of foundimageinfo()  into monrectangle
+
+pp_handler.getSpeeds monrectangle
+
+Screenutilities.SearchRightQuarter()
+repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+	Wait 5
+	if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+	pp_handler.getSpeeds monrectangle
+	
+end repeat -- Download completed
+ScreenUtilities.resetSearch()
+
+put max(global dwnlds) into max_dwnld
+put max(global uplds) into max_upld
+
+if max_dwnld < global downlink_speed then
+	logwarning merge("Max downlink speed ([[max_dwnld]]) is below [[global downlink_speed]]")
+end if
+
+if max_upld < global uplink_speed then
+	logwarning merge("Max uplink speed ([[max_upld]]) is below [[global uplink_speed]]")
+end if
+
+EndTestCase POC1_Download_Data
+
+// Tear down SUT connection
+--Teardown
+
+//

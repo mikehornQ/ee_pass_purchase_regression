@@ -1,0 +1,106 @@
+﻿load_data
+load_commands
+
+
+// navigate to ebdc_core
+
+BeginTestCase POC2_Expire_Pass
+// connect a second SSH session to OTP to execute erlang commands
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+put log_procId_otp into global currentProc
+
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
+
+--{ok,PassInfo} = ebdc_pass:get_pass_data("EE05HS05").
+
+--ebdc_pass:create_active_pass(447432990227,PassInfo,"63599357556",pass,{{2015,05,20},{16,12,36}},{{2015,0--5,29},{14,10,0}},' ROAMING_HS_RF2', pdf_test,[]).
+
+
+conn_handler.connect_core
+
+--["EEDPF0003","EEDPF0004","EEDPF0005","EEDPF0006","EEDPF0011","EEDPF0012", "EEDPF0013"]
+
+
+
+put "EEDPF0003" into my passname
+put "63599357556" into my passid
+put "2015" into my yr
+put "12" into my mnth
+put "04" into my dy
+put "10" into my hr
+put "29" into my mn
+put "00" into my sec
+put "2015" into my yr2
+put "12" into my mnth2
+put "30" into my dy2
+
+
+put format("%4u,%02u,%02u",my yr,my mnth, my dy) into my fdate
+put format("%02u,%02u,%02u",my hr, my mn, my sec) into my ftime
+put format("%4u,%02u,%02u",my yr2,my mnth2, my dy2) into my tdate
+put format("%02u,%02u,%02u",my hr, my mn, my sec) into my ttime
+
+put merge("{ok,PassInfo} = ebdc_pass:get_pass_data(" & numtochar(34) & "[[my passname]]" & numtochar(34) & ").") into my cmdline
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+put merge("ebdc_pass:create_active_pass([[global mobile_number]],PassInfo," & numtochar(34) & "[[my passid]]" & numtochar(34) & ",pass,{{[[my fdate]]},{[[my ftime]]}},{{[[my tdate]]},{[[my ttime]]}},'HS_4GB', pdf_test,[]).") into my cmdline 
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+conn_handler.quit_core
+
+// exit SSH session 2
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session 2
+ssh_handler.close_ssh
+
+
+
+EndTestCase POC2_Expire_Pass
+
+
+load_data
+load_commands
+
+put "2015-12-04_10" into log_start_date
+
+
+// connect to none OTP for pass purchase logs
+ssh_handler.loadOTP "noneotp" -- temporary
+put conn_handler.Connect_Slate into log_procId_noneotp
+put log_procId_noneotp into global currentProc
+
+// find pass purchase in log file
+// navigate to log directory
+ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core/app_logs")
+
+put "open" into log_suffix
+put merge(global cmd_search_syslog) into my cmdline 
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+put global sshOutput into pass_purchase
+
+if "subse_pass" is in pass_purchase then
+	logsuccess "Pass purchase found in SYSLOG file"
+else
+	put "audit" into log_suffix
+	put merge(global cmd_search_syslog) into my cmdline 
+	ssh_handler.sendSSHInputAndReturn(my cmdline)
+	put global sshOutput into pass_purchase
+	
+	if "subse_pass" is in pass_purchase then
+		logsuccess "Pass purchase found in SYSLOG file"
+	else
+		
+		logerror "Pass purchase not found in SYSLOG file. Unable to continue"
+		exit handler
+	end if
+end if
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session 2
+ssh_handler.close_ssh

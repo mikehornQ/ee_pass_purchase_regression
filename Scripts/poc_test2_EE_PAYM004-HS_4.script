@@ -2,62 +2,199 @@
 // M Horn
 // November 2015
 
+Setup
+load_data
 load_commands
-ssh_handler
 
-put() into eol_list
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
 
-// establish SSH session to Slate
-ssh_handler.open_ssh ("testuser", "letmein", "10.249.4.54")
-// directory list to ensure we are connected
-ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+BeginTestCase POC2_Initial_Disconnect_Subscriber
 
-// establish SSH session to OTP
-ssh_handler.open_ssh ("adhill", "adhill546", "10.249.20.104")
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
 
-// Note: delimiter is now ">"
-insert global defaultSSHendOfLine after eol_list
-set global defaultSSHendOfLine to ">"
+EndTestCase POC2_Initial_Disconnect_Subscriber
 
-// directory list to ensure we are connected
-ssh_handler.sendSSHInputAndReturn(global cmd_ls)
+wait 10 seconds
 
-// su - core
-set su_username to "core"
-set su_password to "otpus3r."
-ssh_handler.su (su_username, su_password)
-// confirm we are now 'core' by checking current directory here
-ssh_handler.sendSSHInputAndReturn(global cmd_pwd)
+//
+// Step 1 - Establish PDP context for EE PAYM subscriber with HS_4GB customer type.
+//
+
+BeginTestCase POC2_Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+EndTestCase POC2_Establish_PDP_Context
+
+
+//
+// Step 2 - Purchase 100MB pass for EE PAYM subscriber (1 day)
+//
+
+BeginTestCase POC2_Exhaust_Allowance
+
+// download data until virtual allowance is exhausted
+repeat forever
+	PassPurchaseTests.CheckDataPack
+	if the result  = "Empty" then
+		exit repeat
+	else
+		DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+		
+		Screenutilities.searchRightQuarter()
+		repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+			
+			Wait 5
+			if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+			
+		end repeat -- Download completed
+	end if
+	
+	wait 5
+end repeat
+
+logsuccess "Virtual data allowance exhausted"
+
+EndTestCase POC2_Exhaust_Allowance
+
+
+BeginTestCase POC2_Purchase100MB_Pass
+
+// record test start time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into log_start_date
+
+DataTests.buyNewDataPack "100MB"
+
+EndTestCase POC2_Purchase100MB_Pass
+
+
+// 
+// Step 3a - advance date on Pass by 24 hours and Verify
+//
+
+BeginTestCase POC2_Get_Pass_Details
+// connect to none OTP for pass purchase logs
+ssh_handler.loadOTP "noneotp" -- temporary
+put conn_handler.Connect_Slate into log_procId_noneotp
+put log_procId_noneotp into global currentProc
+
+// find pass purchase in log file
+// navigate to log directory
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core/app_logs")
+
+put merge(global cmd_search_syslog) into my cmdline 
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+put global sshOutput into pass_purchase
+
+if "subse_pass" is in pass_purchase then
+	logsuccess "Pass purchase found in SYSLOG file"
+else
+	logerror "Pass purchase not found in SYSLOG file. Unable to continue"
+	exit handler
+end if
+
+EndTestCase POC2_Get_Pass_Details
 
 // navigate to ebdc_core
+
+BeginTestCase POC2_Expire_Pass
+// connect a second SSH session to OTP to execute erlang commands
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+put log_procId_otp into global currentProc
+
 ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
 
-// advance date on Pass by 24 hours
+conn_handler.connect_core
 
-// invoke shell
--- end of line delimeter is ")" for this first command before reverting to ">"
-ssh_handler.sendSSHInputAndReturn(global cmd_erlang_shell, ")")
-ssh_handler.sendSSHInputAndReturn(global cmd_clear_buffer)
-ssh_handler.sendSSHInputAndReturn("{ok,PassInfo} = ebdc_pass:get_pass_data(""<Pass ID>"").")
-set my cmdline to "ebdc_pass:create_active_pass(<MSISDN>,PassInfo,""63599357556"",pass,{{2015,05,20},{16,12,36}},{{2015,05,29},{14,10,0}},'' HS_4GB'', pdf_test,[])."
-replace "<MSISDN>" by "7432990471" in my cmdline
+put item 2 of split(pass_purchase,"," ) into my passname
+put item 4 of split(pass_purchase,",") into my passid
+put item 7 of split(pass_purchase,",") into my yr
+put item 8 of split(pass_purchase,",") into my mnth
+put  item 9 of split(pass_purchase,",") into my dy
+put item 10 of split(pass_purchase,",") into my hr
+put item 11 of split(pass_purchase,",") into my mn
+put item 12 of split(pass_purchase,",") into my sec
+put item 7 of split(pass_purchase,",") into my yr2
+put item 8 of split(pass_purchase,",") into my mnth2
+put  item 9 of split(pass_purchase,",") into my dy2
+
+replace "{" with "" in my yr
+replace "}" with "" in my dy
+replace "{" with "" in my hr
+replace "}" with "" in my sec
+replace "{" with "" in my yr2
+replace "}" with "" in my dy2
+replace "{" with "" in my hr2
+replace "}" with "" in my sec2
+
+if my dy = 1 then 
+	if my mnth = 1 then
+		subtract 1 from my yr
+		put 12 into my mnth
+	else
+		subtract 1 from my mnth
+	end if
+else
+	subtract 1 from my dy
+end if
+
+put format("%4u,%02u,%02u",my yr,my mnth, my dy) into my fdate
+put format("%02u,%02u,%02u",my hr, my mn, my sec) into my ftime
+put format("%4u,%02u,%02u",my yr2,my mnth2, my dy2) into my tdate
+put format("%02u,%02u,%02u",my hr, my mn, my sec) into my ttime
+
+put merge("{ok,PassInfo} = ebdc_pass:get_pass_data(""[[my passname]]).") into my cmdline
 ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+put merge("ebdc_pass:create_active_pass([[global mobile_number]],PassInfo,""[[my passid]]"",pass,{{[[my fdate]]},{[[my ftime]]}},{{[[my tdate]]},{[[my ttime]]}},'HS_4GB', pdf_test,[]).") 
+into my cmdline 
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+conn_handler.quit_core
+
+// exit SSH session 2
 
 // exit core
 ssh_handler.exit_shell
 
-// restore global defaultSSHendOfLine
-set global defaultSSHendOfLine to last item of eol_list
-delete last item of eol_list
-
-// close SSH session
+// close SSH session 2
 ssh_handler.close_ssh
 
-(* -- original shell:
-cd ebdc_core
-bin/to_erl./shell/ # invoke core shell
-f().
-{ok,PassInfo} = ebdc_pass:get_pass_data("<Pass ID>").
-ebdc_pass:create_active_pass(<MSISDN>,PassInfo,"63599357556",pass,{{2015,05,20},{16,12,36}},{{2015,05,29},{14,10,0}},' HS_4GB', pdf_test,[]).
-*)
+// switch back to SSH session 1 and exit this too
+put log_procId_noneotp into global currentProc
 
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh 
+
+logsuccess "Expire Pass command executed"
+
+EndTestCase POC2_Expire_Pass
+
+// 
+// Step 3b - Verify pass is no longer valid by browsing to bbc web site - should redirect to status page
+//
+
+BeginTestCase POC2_Browse_Web
+
+DeviceDriver.goToUrlInBrowser("http://www.bbc.co.uk")
+
+If not ImageFound (20,Text: "NEED") then 
+	Report_Defect.Warning "Unable to verify pass expiry. OCR did not find text ""NEED"""
+else
+	logsuccess "Pass expiry confirmed"
+end if
+
+EndTestCase POC2_Browse_Web
+
+//

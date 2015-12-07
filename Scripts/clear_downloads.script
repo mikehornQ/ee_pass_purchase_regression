@@ -1,0 +1,97 @@
+﻿(* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  Script generated:  2015-12-02 09:56:55
+  From session:  clear_downloads
+  Captured on:  2015-12-02 09:52:42
+  From server:  SM-G920F
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *)
+Setup
+
+TypeText HomeButton
+
+if imagefound("Home/Apps_Icon") then
+	Click FoundImageLocation()
+	
+	if imagefound(Text:"Tools", ContrastColor:(243,244,244), Contrast:"On") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate Tools"
+		exit handler
+	end if
+	
+	if imagefound("Applications/MyFiles") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate MyFiles icon"
+		exit handler
+	end if
+	
+	if imagefound (Text:"HOME") then
+		click foundimagelocation()
+	end if
+	
+	if imagefound ("Applications/Device_Storage") then
+		Click FoundImageLocation()
+	else
+		logerror "Unable to locate Device Storage icon"
+		exit handler
+	end if
+	
+	if imagefound (Text:"HOME") then
+		click foundimagelocation()
+	end if
+	
+	if imagefound (Text:"Download", ContrastColor:(0,0,0), Contrast:"On") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate Download folder"
+		exit handler
+	end if
+	
+	if imagefound (Text:"MORE") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate MORE"
+		exit handler
+	end if
+	
+	if imagefound (Text:"Edit") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate MORE"
+		exit handler
+	end if
+	
+	put everyimagelocation("Applications/select_file") into my downloads
+	
+	repeat with each item in my downloads
+		click it
+	end repeat
+	
+	if imagefound (Text:"DELETE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+		click FoundImageLocation()	
+		
+		if imagefound (Text:"DELETE", ContrastColor:(204,136,0), WaitFor:8, Contrast:"On") then
+			click FoundImageLocation()
+		else
+			logerror "Unable to locate DELETE"
+		end if
+		
+		else
+		logwarning "DELETE not available, no downloads selected for deletion?"
+	end if
+	
+	if imagefound (Text:"HOME") then
+		click foundimagelocation()
+	end if
+	
+end if
+
+(*
+DeviceDriver.openActivityCentre()
+
+Draganddrop("Samsung_S6_ac_download","Samsung_S6_ac_RHS")
+*)
+
+
+
+
