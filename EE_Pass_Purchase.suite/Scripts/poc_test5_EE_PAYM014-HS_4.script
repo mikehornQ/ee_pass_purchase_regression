@@ -1,0 +1,38 @@
+﻿// poc_test5_EE_PAYM014-HS_4 - Verify that Gy nodes do not have Gy CCR-U messages in Gy failopen mode
+// M Horn
+// November 2015
+
+put() into eol_list
+
+Setup
+load_data
+load_commands
+ssh_handler
+conn_handler
+
+// connect to device
+Connect_SUT global PAYM_device
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+wait 30 seconds
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+// connect to Slate 
+put conn_handler.Connect_Slate into log_prodID
+put log_procId into global currentProc
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+// Tear down SUT connection
+Teardown
+
+
+//

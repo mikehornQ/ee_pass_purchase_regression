@@ -1,0 +1,111 @@
+﻿// conn_handler - connectivity handler
+// M Horn
+// November 2015
+
+to Connect_SUT test_device
+	
+	set my device = item 1 of  test_device
+	set my server = item 2 of  test_device
+	set my port = item 3 of  test_device
+	set my isvisible = item 4 of  test_device
+	
+	Connect_Device my device ,my server, my port, my isvisible
+	
+end Connect_SUT
+
+to Connect_Slate
+	// establish SSH session to Slate
+	conn_handler.push_eol("$")
+	ssh_handler.open_ssh ("testuser", "letmein", "10.249.4.54")
+	conn_handler.push_eol(":")
+	ssh_handler.sendSSHInputAndReturn(merge("ssh core@[[global otp_node]]"))
+	conn_handler.pop_eol
+	conn_handler.push_eol(global otp_delim)
+	ssh_handler.sendSSHInputAndReturn( "otpus3r.")
+	
+	return global currentProc
+	
+end Connect_Slate
+
+to Connect_PIT12
+	// establish SSH session to Slate
+	conn_handler.push_eol("$")
+	ssh_handler.open_ssh_PIT12 ("core", "otpus3r.", "127.0.0.1")
+	(*conn_handler.push_eol(":")
+	ssh_handler.sendSSHInputAndReturn(merge("ssh core@[[global otp_node]]"))
+	conn_handler.pop_eol
+	conn_handler.push_eol(global otp_delim)
+	ssh_handler.sendSSHInputAndReturn( "otpus3r.")*)
+	
+	return global currentProc
+	
+end Connect_PIT12
+
+to Search_Log Search_Term
+
+	put item 1 of Search_Term into search_pattern
+	set my cmdline to merge(global cmd_search_log)
+	ssh_handler.sendSSHInputAndReturn( my cmdline)
+	
+	if "0" is in item 2 of split(global sshOutput,lf) then
+		LogWarning "Unable to find " & item 2 of Search_Term & " in log file"
+	-- else
+	--	LogSuccess  item 2 of Search_Term & " Recorded"
+	end if
+	
+end Search_Log
+
+to push_eol pdelim
+	insert global defaultSSHendOfLine after global eol_list
+	set global defaultSSHendOfLine to  pdelim
+	--log  "push" && global defaultSSHendOfLine  && global eol_list
+end push_eol
+
+to pop_eol
+	put  global defaultSSHendOfLine into my eol
+	set global defaultSSHendOfLine to last item of global eol_list
+	delete last item of global eol_list
+	--log  "pop" && "[" & my eol & "]" && global defaultSSHendOfLine && global eol_list
+end pop_eol
+
+to reset_subscriber
+	# should already be logged onto core
+	connect_core
+	
+	put merge("ebdc_eedb:reset_msisdn([[global mobile_number]]).") into my cmd
+	ssh_handler.sendSSHInputAndReturn(my cmd)
+	
+	if "ok" is not in global SSHOutput then
+		logwarning "Unexpected response from Erlang:" && conn_handler.strip_output(item 2 of split(global sshOutput,lf))
+	end if
+	
+	quit_core
+	
+end reset_subscriber
+
+to connect_core
+	conn_handler.push_eol(global erlang_delim)
+	ssh_handler.sendSSHInputAndReturn(global cmd_erlang_shell)
+	ssh_handler.sendSSHInputAndReturn(global cmd_clear_buffer)
+end connect_core
+
+to quit_core
+	conn_handler.push_eol("tion")
+	ssh_handler.sendSSHInputNoReturn(numtochar(3)) -- Ctrl-C 
+	conn_handler.pop_eol -- "tion"
+	conn_handler.pop_eol -- global erlang_delim
+	
+	ssh_handler.sendSSHInputAndReturn("a") --  '(a)bort'
+end quit_core
+
+to strip_output output_string
+
+	replace "[returnKey]" with "" in output_string
+	replace "{" with "" in output_string
+	replace "}" with "" in output_string
+	
+	return output_string
+	
+end strip_output
+
+//

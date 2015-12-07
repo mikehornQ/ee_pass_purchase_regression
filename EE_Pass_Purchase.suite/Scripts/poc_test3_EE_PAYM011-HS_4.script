@@ -1,0 +1,92 @@
+﻿// poc_test3_EE_PAYM011-HS_4 - Stack usage test. Check volume SMS alerts
+// M Horn
+// November 2015
+
+Setup
+load_data
+load_commands
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+BeginTestCase POC3_Initialise
+
+// Reset usage to 4GB available
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
+
+conn_handler.reset_subscriber
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+logsuccess "Initialsed"
+
+EndTestCase POC3_Initialise
+
+wait 10 seconds
+
+//
+// Step 1 - Establish PDP Context
+//
+BeginTestCase POC3_Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+logsuccess "PDP context established"
+
+EndTestCase POC3_Establish_PDP_Context
+
+//
+// Step 2 - Download 4GB of data
+//
+
+BeginTestCase POC3_Dowload_4GB_Data
+
+
+
+repeat 4 times
+	DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+	
+	Screenutilities.searchRightQuarter()
+	repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+		
+		Wait 5
+		if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+		pp_handler.check_for_sms 
+		
+	end repeat -- Download completed
+	
+end repeat
+
+ScreenUtilities.resetSearch()
+
+EndTestCase POC3_Dowload_4GB_Data
+
+//
+// Step 3 disconnect subscriber
+//
+BeginTestCase POC3_Disconnect_Subscriber
+
+DeviceDriver.setAirplaneMode
+
+EndTestCase POC3_Disconnect_Subscriber
+
+
+
+
+
+//
+
+

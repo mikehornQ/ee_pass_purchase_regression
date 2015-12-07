@@ -1,0 +1,131 @@
+﻿// poc_test4_EE_PAYM016-HS_4 - Stack usage check
+// M Horn
+// November 2015
+
+Setup
+load_data
+load_commands
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+BeginTestCase POC4_Initialise
+
+// Reset usage to 4GB available
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+
+ssh_handler.sendSSHInputAndReturn("$HOME/cd ebdc_core")
+
+conn_handler.reset_subscriber
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+logsuccess "Initialsed"
+
+EndTestCase POC4_Initialise
+
+wait 10 seconds
+
+//
+// Step 1 - Establish PDP Context
+//
+BeginTestCase POC4_Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+EndTestCase POC4_Establish_PDP_Context
+
+//
+// Step 2 - Download 4GB of data
+//
+
+// record test start time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into log_start_date
+
+BeginTestCase POC4_Dowload_4GB_Data
+
+repeat 4 times
+	DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+	
+	Screenutilities.SearchRightQuarter()
+	repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+		Wait 5
+		if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+	end repeat -- Download completed
+	ScreenUtilities.resetSearch()
+end repeat
+
+EndTestCase POC4_Dowload_4GB_Data
+
+BeginTestCase POC4_Disconnect_Subscriber
+
+DeviceDriver.setAirplaneMode
+
+EndTestCase POC4_Disconnect_Subscriber
+
+// record test end time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into log_end_date
+
+//
+// Step 3 - Query event log
+//
+
+BeginTestCase POC4_Query_Logs
+
+ssh_handler.loadOTP "otp" -- temporary
+put conn_handler.Connect_Slate into log_procId_noneotp
+put log_procId_noneotp into global currentProc
+
+// find pass purchase in log file
+// navigate to log directory
+ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core/app_logs")
+
+// check entries for device under test
+conn_handler.Search_Log global log_GX_Initiate -- GX Initiate
+conn_handler.Search_Log global log_GY_Initiate -- GY Initiate
+conn_handler.Search_Log global log_GY_Terminate -- GY Terminate
+conn_handler.Search_Log global log_GX_Terminate -- GX Terminate
+
+//
+// Step 4 - Connect subscriber again and verify in event log
+//
+BeginTestCase POC4_Reestablish_PDP_Context
+
+// search log from end of last search
+put log_end_date into log_start_date
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+// record test end time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into log_end_date
+
+conn_handler.Search_Log global log_GX_Initiate -- GX Initiate
+conn_handler.Search_Log global log_GY_Initiate -- GY Initiate
+
+EndTestCase POC4_Reestablish_PDP_Context
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+EndTestCase POC4_Query_Logs
+
+
+// Tear down SUT connection
+--Teardown
+
+
+//
+
+
