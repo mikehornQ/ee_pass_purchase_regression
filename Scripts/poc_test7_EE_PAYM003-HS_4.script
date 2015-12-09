@@ -1,0 +1,21 @@
+﻿// poc_test7_EE_PAYM002-HS_4 - EE_PAYM002-HS_4GB-Adult content flag AACY. Adult content allowed
+// M Horn
+// December 2015
+
+Setup
+load_data
+load_commands
+
+put "AACN" into global old_aac
+put "AACY" into global new_aac
+
+set_adult_content_flag
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+DeviceDriver.goToURLInBrowser "http://www.ladbrokes.com"
+
+

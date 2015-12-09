@@ -15,7 +15,8 @@ BeginTestCase POC4_Initialise
 
 // Reset usage to 4GB available
 ssh_handler.loadOTP "otp"
-put conn_handler.Connect_Slate into log_procId_otp
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_otp
 
 ssh_handler.sendSSHInputAndReturn("$HOME/cd ebdc_core")
 
@@ -79,9 +80,9 @@ put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my
 
 BeginTestCase POC4_Query_Logs
 
-ssh_handler.loadOTP "otp" -- temporary
-put conn_handler.Connect_Slate into log_procId_noneotp
-put log_procId_noneotp into global currentProc
+ssh_handler.loadOTP "noneotp"
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_noneotp
 
 // find pass purchase in log file
 // navigate to log directory

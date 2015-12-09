@@ -2,6 +2,23 @@
 // M Horn
 // December 2015
 
+load_data
+load_commands
+
+// Reset usage to 4GB available
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+
+ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core")
+
+conn_handler.reset_subscriber
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+// -------------------------------
 setup
 ScreenUtilities.resetSearch()
 // -------------------------------
@@ -84,3 +101,53 @@ pp_handler.getSpeeds(monrectangle)
 
 log "D:" && max(global dwnlds)
 log "U:" && max(global uplds)
+
+// ------------------------------------------
+setup
+load_data
+load_commands
+ssh_handler.loadOTP "NONEOTP"
+conn_handler.Connect_Slate
+conn_handler.Connect_sevas
+put global currentProc into log_procId_sevas
+
+ssh_handler.sendSSHInputAndReturn("cd sevas_db_if")
+
+conn_handler.start_sevas_shell
+
+// build a command string to disable adult content
+put "sevas_pps_if:inject_service_order(" & NumToChar(34) & "[{\" & NumToChar(34) & "CHD\" & NumToChar(34) & ",\" & NumToChar(34) & "txn=462358855\" & NumToChar(34) & ",\" & NumToChar(34) & "seq=1\" & NumToChar(34) & ",\" & NumToChar(34) & "rsd=0\" & NumToChar(34) & ",\" & NumToChar(34) & "pty=0\" & NumToChar(34) & ",\" & NumToChar(34) & "usr=99999\" & NumToChar(34) & "" & NumToChar(34) & "" & NumToChar(34) & ",\" & NumToChar(34) & "sod=20100329142940\" & NumToChar(34) & "}" & NumToChar(34) & " " & NumToChar(34) & ",{\" & NumToChar(34) & "MSISDN_o=[[ global mobile_number]]\" & NumToChar(34) & ",\" & NumToChar(34) & "DET=NR\" & NumToChar(34) & "}" & NumToChar(34) & "" & NumToChar(34) & ",{\" & NumToChar(34) & "BAS_c\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "IMSI=[[imsi_value]]\" & NumToChar(34) & "" & NumToChar(34) & "" & NumToChar(34) & ",\" & NumToChar(34) & "DB=V\" & NumToChar(34) & ",\" & NumToChar(34) & "MP=A\" & NumToChar(34) & ",\" & NumToChar(34) & "CH=[[ch_value]]\" & NumToChar(34) & ",\" & NumToChar(34) & "CLI=AA\" & NumToChar(34) & ",\" & NumToChar(34) & "BAN=[[ban_value]]\" & NumToChar(34) & "" & NumToChar(34) & "" & NumToChar(34) & ",\" & NumToChar(34) & "PP=X12M24E51\" & NumToChar(34) & ",\" & NumToChar(34) & "SSN=8944125390606810000\" & NumToChar(34) & ",\" & NumToChar(34) & "BC=[[bc_value]]\" & NumToChar(34) & "}" & NumToChar(34) & "" & NumToChar(34) & ",{o,\" & NumToChar(34) & "IMEI=[[imei_value]]\" & NumToChar(34) & "}" & NumToChar(34) & "" & NumToChar(34) & ",{n,\" & NumToChar(34) & "IMEI=35610000558085\" & NumToChar(34) & ",\" & NumToChar(34) & "SE=AJ32\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "CF_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "OPT=A\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "ROAM_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "TYPE=S&SG\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "CAW_s\" & NumToChar(34) & ",{t,\" & NumToChar(34) & "SW=1\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "HOLD_s\" & NumToChar(34) & "}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "ODATA_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "OPT=D96\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "OFAX_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "OPT=F3\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "TMS_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "TYPE=MO&MT\" & NumToChar(34) & "}}" & NumToChar(34)  & " " & NumToChar(34) & ",{\" & NumToChar(34) & "DCF_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "FNUM=VMS\" & NumToChar(34) & ",\" & NumToChar(34) & "BSG=V\" & NumToChar(34) & ",\" & NumToChar(34) & "TYPE=CFS\" & NumToChar(34) & "}}" & NumToChar(34)  & NumToChar(34) & ",{\" & NumToChar(34) & "VMS_s\" & NumToChar(34) & ",{s,\" & NumToChar(34) & "TYP=5320\" & NumToChar(34) & ",\" & NumToChar(34) & "ADSV=CRT&GRP\" & NumToChar(34) & ",\" & NumToChar(34) & "POSTC=KT27TU\" & NumToChar(34) & ",\" & NumToChar(34) & "ROAM=0\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "INF_c\" & NumToChar(34) & ",{o,\" & NumToChar(34) & "OPT=[[old_AAC]]&I0&I1&MISP&VIC&FUP+POL=[[fup_value]]\" & NumToChar(34) & "}" & NumToChar(34) & NumToChar(34) & ",{n,\" & NumToChar(34) & "OPT=[[new_AAC]]&I0&I1&MISP&VIC&FUP+POL=[[fup_value]]\" & NumToChar(34) & "}}" & NumToChar(34) & NumToChar(34) & ",{\" & NumToChar(34) & "PDATA_s\" & NumToChar(34) & "}]" & NumToChar(34) & ")."  into opt_string
+
+// ------------------------------------
+// these next six values are obtained from OMC. May need to set them by script although they are not likely to change during tests so they can be in a data file
+put "0" into imei_value // 35610000558085
+put "234309000011399" into imsi_value
+put "EEONE" into ch_value // wh
+put "20015282" into ban_value
+put "2" into bc_value
+put "703" into fup_value
+// ------------------------------------
+
+put "AACY" into old_AAC
+put "AACN" into new_AAC
+put merge(opt_string) into my cmd
+ssh_handler.sendSSHInputAndReturn(my cmd)
+
+conn_handler.end_sevas_shell
+
+DeviceDriver.goToURLInBrowser "http://www.williamhill.com"
+
+// exit SU shell
+ssh_handler.exit_shell
+// exit SEVAS
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+
+
+
+
+
+

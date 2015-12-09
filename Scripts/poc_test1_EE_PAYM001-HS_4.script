@@ -2,8 +2,6 @@
 // M Horn
 // November 2015
 
-put() into eol_list
-
 Setup
 load_data
 load_commands
@@ -19,8 +17,10 @@ end if
 BeginTestCase POC1_Initialise
 
 // Reset usage to 4GB available
-ssh_handler.loadOTP "OTP"
-put conn_handler.Connect_Slate into log_procId_otp
+ssh_handler.loadOTP "otp"
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_otp
+
 ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
 
 conn_handler.reset_subscriber

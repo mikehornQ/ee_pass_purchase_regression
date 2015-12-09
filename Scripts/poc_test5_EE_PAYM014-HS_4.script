@@ -7,8 +7,7 @@ put() into eol_list
 Setup
 load_data
 load_commands
-ssh_handler
-conn_handler
+
 
 // connect to device
 Connect_SUT global PAYM_device
@@ -22,8 +21,9 @@ wait 30 seconds
 DeviceDriver.setAirplaneModeOff
 
 // connect to Slate 
-put conn_handler.Connect_Slate into log_prodID
-put log_procId into global currentProc
+ssh_handler.loadOTP "otp"
+conn_handler.Connect_sevas
+put global currentProc into log_procId_otp
 
 // exit core
 ssh_handler.exit_shell

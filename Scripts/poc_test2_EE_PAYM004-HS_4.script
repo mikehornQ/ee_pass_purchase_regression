@@ -43,7 +43,7 @@ repeat forever
 	PassPurchaseTests.CheckDataPack
 	if the result  = "Empty" then
 		exit repeat
-	else
+		else
 		DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
 		
 		Screenutilities.searchRightQuarter()
@@ -81,8 +81,8 @@ EndTestCase POC2_Purchase100MB_Pass
 BeginTestCase POC2_Get_Pass_Details
 // connect to none OTP for pass purchase logs
 ssh_handler.loadOTP "noneotp" -- temporary
-put conn_handler.Connect_Slate into log_procId_noneotp
-put log_procId_noneotp into global currentProc
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_noneotp
 
 // find pass purchase in log file
 // navigate to log directory
@@ -107,8 +107,8 @@ EndTestCase POC2_Get_Pass_Details
 BeginTestCase POC2_Expire_Pass
 // connect a second SSH session to OTP to execute erlang commands
 ssh_handler.loadOTP "otp"
-put conn_handler.Connect_Slate into log_procId_otp
-put log_procId_otp into global currentProc
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_otp
 
 ssh_handler.sendSSHInputAndReturn("cd ebdc_core")
 

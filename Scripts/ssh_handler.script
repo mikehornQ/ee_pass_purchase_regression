@@ -99,13 +99,11 @@ to loadOTP node
 		set global cmd_erlang_shell to global otp_erlang_shell
 		set global erlang_delim = global otp_erlang_delim
 		set global otp_delim = global otp_delim
-		log "Loading OTP"
 	else
 		set global otp_node = global none_otp_node
 		set global cmd_erlang_shell to global none_otp_erlang_shell
 		set global erlang_delim = global none_otp_erlang_delim
 		set global otp_delim = global none_otp_delim
-		log "Loading NONE OTP"
 	end if
 	
 end loadOTP

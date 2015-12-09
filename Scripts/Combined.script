@@ -16,7 +16,8 @@ BeginTestCase Initialise
 
 // Reset usage to 4GB available
 ssh_handler.loadOTP "otp"
-put conn_handler.Connect_Slate into log_procId_otp
+conn_handler.Connect_ebdc
+put global currentProc into log_procId_otp
 
 ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core")
 

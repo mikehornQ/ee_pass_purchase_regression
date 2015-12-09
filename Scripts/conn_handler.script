@@ -17,15 +17,28 @@ to Connect_Slate
 	// establish SSH session to Slate
 	conn_handler.push_eol("$")
 	ssh_handler.open_ssh ("testuser", "letmein", "10.249.4.54")
+end Connect_Slate
+
+to Connect_ebdc
 	conn_handler.push_eol(":")
 	ssh_handler.sendSSHInputAndReturn(merge("ssh core@[[global otp_node]]"))
 	conn_handler.pop_eol
 	conn_handler.push_eol(global otp_delim)
-	ssh_handler.sendSSHInputAndReturn( "otpus3r.")
-	
-	return global currentProc
-	
-end Connect_Slate
+	ssh_handler.sendSSHInputAndReturn( "otpus3r.")	
+end Connect_ebdc
+
+to Connect_sevas
+	conn_handler.push_eol(":")
+	ssh_handler.sendSSHInputAndReturn(merge("ssh adhill@[[global sevas_node]]"))
+	conn_handler.pop_eol
+	conn_handler.push_eol(global sevas_delim)
+	ssh_handler.sendSSHInputAndReturn( "adhill546")
+	conn_handler.push_eol(global sevas_delim) -- for SU shell
+	conn_handler.push_eol(":")
+	ssh_handler.sendSSHInputAndReturn( "su - otpuser")
+	conn_handler.pop_eol
+	ssh_handler.sendSSHInputAndReturn( "otpus3r.")	
+end Connect_sevas
 
 to Connect_PIT12
 	// establish SSH session to Slate
@@ -49,8 +62,8 @@ to Search_Log Search_Term
 	
 	if "0" is in item 2 of split(global sshOutput,lf) then
 		LogWarning "Unable to find " & item 2 of Search_Term & " in log file"
-	-- else
-	--	LogSuccess  item 2 of Search_Term & " Recorded"
+		-- else
+		--	LogSuccess  item 2 of Search_Term & " Recorded"
 	end if
 	
 end Search_Log
@@ -108,4 +121,16 @@ to strip_output output_string
 	
 end strip_output
 
+to start_sevas_shell
+	conn_handler.push_eol("exit)")
+	ssh_handler.sendSSHInputAndReturn(global cmd_erlang_shell)
+	conn_handler.pop_eol -- "exit)"
+	conn_handler.push_eol(global erlang_delim)
+	ssh_handler.sendSSHInputAndReturn(global cmd_clear_buffer)
+end start_sevas_shell
+
+to end_sevas_shell
+	ssh_handler.sendSSHInputNoReturn(numtochar(4)) -- Ctrl-D
+	conn_handler.pop_eol -- global erlang_delim
+end end_sevas_shell
 //

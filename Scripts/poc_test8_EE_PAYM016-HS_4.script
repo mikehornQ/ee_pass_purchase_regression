@@ -1,0 +1,98 @@
+﻿// poc_test8_EE_PAYM016-HS_4 -EE_PAYM029-BUS_36GB No Pass SMS.  verify that no_pass SMS is triggered only once in 24 hours for EE PAYM subscribe
+// M Horn
+// December 2015
+
+Setup
+load_data
+load_commands
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+BeginTestCase POC8_Initial_Disconnect_Subscriber
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+EndTestCase POC8_Initial_Disconnect_Subscriber
+
+wait 10 seconds
+
+//
+// Step 1 - Establish PDP context for EE PAYM subscriber with HS_4GB customer type.
+//
+
+BeginTestCase POC8_Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+EndTestCase POC8_Establish_PDP_Context
+
+
+//
+// Step 2 - Exhaust allowance. 80% and 100% usage SMS should be received
+//
+
+BeginTestCase POC8_Exhaust_Allowance
+
+// download data until virtual allowance is exhausted
+repeat forever
+	PassPurchaseTests.CheckDataPack
+	if the result  = "Empty" then
+		exit repeat
+	else
+		DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+		
+		Screenutilities.searchRightQuarter()
+		repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+			
+			pp_handler.check_for_sms
+			Wait 5
+			if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+			
+		end repeat -- Download completed
+	end if
+	
+	wait 5
+end repeat
+
+logsuccess "Virtual data allowance exhausted"
+
+EndTestCase POC8_Exhaust_Allowance
+
+BeginTestCase POC8_Test_SMS
+repeat 5 times
+	
+	DeviceDriver.setAirplaneMode
+	wait 10 seconds
+	// turn off airplane mode, initiate connection to network
+	DeviceDriver.setAirplaneModeOff
+	
+	wait 1 minute
+	
+	put DeviceDriver.getLastReceivedMessageBody() into received
+	
+	replace every occurrence of lf with " " in received.body
+	
+	if not (received.body contains global warningTemplate)
+		Report_Defect "Assertion Failed", format("Expected to receive a message containing: '%s' Received message: '%s'",global warningTemplate,received.body)
+	end if
+	
+	// 
+	if repeatindex() = 1 then -- Step 3 - Disconnect and re-establish PTP session. No Pass SMS should be received
+		
+	else --  Step 4 - Disconnect and re-establish context 4 more times. No Pass SMS should not be received again in 24 hour period
+		
+	end if
+	
+	
+	
+	
+	
+	
+end repeat
+
+EndTestCase POC8_Test_SMS

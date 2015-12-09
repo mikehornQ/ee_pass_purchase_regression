@@ -12,8 +12,6 @@ set global cmd_exit to "exit"
 
 set global cmd_search_log to "awk '/[[global log_start_date]]/,/[[global log_end_date]]/' ebdc_event_log_*.audit.open | grep [[global mobile_number]] | grep [[search_pattern]] | wc -l"
 
---set global cmd_search_syslog = "awk '/[[log_start_date]]/,/[[log_end_date]]/' syslog_ebdc_core_*.open| grep [[global mobile_number]] | grep '[[search_pattern]]' "
-
 set global cmd_search_syslog = "grep '[[global log_start_date]]' syslog_ebdc_core_*.[[log_suffix]]| grep [[global mobile_number]] |  grep ' Gx: Cached pass info' | grep ',pass,' | awk '{print $11}'"
 
 -- erlang commands
