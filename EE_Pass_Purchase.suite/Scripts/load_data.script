@@ -1,0 +1,65 @@
+﻿// load_data - load test data
+// M Horn
+// November 2015
+
+// convert to CSV file input at the end of POC
+
+//TODO: These items need to be set from a data file
+
+-- PDF11 none OTP
+set global none_otp_node = "10.249.20.104"
+set global none_otp_delim = ">"
+set global none_otp_erlang_shell to "bin/to_erl ./shell/"
+set global none_otp_erlang_delim = ">"
+
+-- PDF11 OTP
+set global otp_node = "10.249.54.41"
+set global otp_delim = "$"
+set global otp_erlang_shell to "core attach"
+set global otp_erlang_delim = ">"
+
+(*-- PDF12 none OTP
+set global none_otp_node = "10.249.54.39"
+set global none_otp_delim = ">"
+set global none_otp_erlang_shell to "bin/to_erl ./shell/"
+set global none_otp_erlang_delim = ">"
+
+-- PDF12 OTP
+set global otp_node = "10.249.54.74"
+set global otp_delim = "$"
+set global otp_erlang_shell to "core attach"
+set global otp_erlang_delim = ">"*)
+
+-- Defaults
+set global defaultSSHendOfLine = "$"
+set global mobile_number = "447432991399"
+set global PAYM_device = ("SM-G920F","SM-G920F (04157df455a99b1e)",5900,True) 
+
+-- log file entries
+set global log_GX_Initiate to ("GX9I", "Gx Initiate")
+set global log_GX_Terminate to ("GX9T", "Gx Terminate")
+set global log_GY_Initiate to ("GYI", "Gy Initiate")
+set global log_GY_Update to ("GYU", "Gy Update")
+set global log_GY_Update2 to ("GYDU", "Gy Update")
+set global log_GY_Terminate to ("GYT", "Gy Terminate")
+
+-- ssh 
+set global currentProc to empty
+set global defaultSSHtimeout to 3 seconds
+put () into global handler_list
+put() into eol_list
+
+-- URLs
+set global purchaseURL = "http://www.ebd04ee.tmdev.t-motion.co.uk/purchase"
+set global statusURL =  "http://www.ebd04ee.tmdev.t-motion.co.uk/status"
+set global availablePacks = ("100MB","1GB","10GB")
+set global DownloadURL = "http://www.thinkbroadband.com/download.html"
+
+-- link speeds
+set global uplink_speed = 60
+set global downlink_speed = 150
+
+
+//
+
+

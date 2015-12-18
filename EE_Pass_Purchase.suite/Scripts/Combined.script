@@ -1,0 +1,150 @@
+﻿// Combined test. Incorporation POC test cases 1, 3 & 4 assigned to uplink and downlink speed
+// M Horn
+// December 2015
+
+Setup
+load_data
+load_commands
+
+// connect to device
+if status of ConnectionInfo() <> "connected" then
+	Conn_Handler.Connect_SUT global PAYM_device
+end if
+
+
+BeginTestCase Initialise
+
+// Reset usage to 4GB available
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+
+ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core")
+
+conn_handler.reset_subscriber
+
+// turn on airplane mode
+DeviceDriver.setAirplaneMode
+
+logsuccess "Initialsed"
+
+EndTestCase Initialise
+
+wait 30 seconds
+
+BeginTestCase Establish_PDP_Context
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+LogSuccess "PDP Context Established"
+
+EndTestCase Establish_PDP_Context
+
+
+
+BeginTestCase Dowload_4GB_Data
+
+// record test start time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into global log_start_date
+
+screenutilities.searchTopQuarter()
+if ImageFound(Text:"D:", ContrastColor:(2,7,8), WaitFor:8, Contrast:"On") = False then
+	logerror "Unable to identify link speed. Exiting script"	
+end if
+
+put () into global dwnlds
+put () into global uplds
+
+put ImageRectangle of foundimageinfo()  into monrectangle
+
+pp_handler.getSpeeds(monrectangle)
+
+repeat 1 times
+	DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
+	
+	Screenutilities.searchRightQuarter()
+	repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
+		
+		pp_handler.check_for_sms 
+		if repeatindex = 1 then pp_handler.getSpeeds(monrectangle)
+		Wait 5
+		if repeatIndex() > 1200 then 
+			Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
+		end if
+		
+	end repeat -- Download completed
+	
+end repeat
+
+ScreenUtilities.resetSearch()
+
+put max(global dwnlds) into max_dwnld
+put max(global uplds) into max_upld
+
+if max_dwnld < global downlink_speed then
+	logwarning merge("Max downlink speed ([[max_dwnld]]) is below [[global downlink_speed]]")
+end if
+
+if max_upld < global uplink_speed then
+	logwarning merge("Max uplink speed ([[max_upld]]) is below [[global uplink_speed]]")
+end if
+
+EndTestCase Dowload_4GB_Data
+
+
+BeginTestCase Disconnect_Subscriber
+
+DeviceDriver.setAirplaneMode
+
+// record test end time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into global log_end_date
+
+EndTestCase Disconnect_Subscriber
+
+
+BeginTestCase Query_Logs
+
+ssh_handler.loadOTP "otp" -- temporary
+put conn_handler.Connect_Slate into log_procId_noneotp
+put log_procId_noneotp into global currentProc
+
+// find pass purchase in log file
+// navigate to log directory
+ssh_handler.sendSSHInputAndReturn("cd $HOME/ebdc_core/app_logs")
+
+// check entries for device under test
+conn_handler.Search_Log global log_GX_Initiate -- GX Initiate
+conn_handler.Search_Log global log_GY_Initiate -- GY Initiate
+conn_handler.Search_Log global log_GY_Terminate -- GY Terminate
+conn_handler.Search_Log global log_GX_Terminate -- GX Terminate
+
+EndTestCase Query_Logs
+
+
+BeginTestCase Reestablish_PDP_Context
+
+// search log from end of last search
+put global log_end_date into global log_start_date
+
+// turn off airplane mode, initiate connection to network
+DeviceDriver.setAirplaneModeOff
+
+// record test end time in log format
+put the dateitems into my date
+put format("%4u-%02u-%02u_%02u",item 1 of my date,item 2 of my date,item 3 of my date,item 4 of my date) into global log_end_date
+
+conn_handler.Search_Log global log_GX_Initiate -- GX Initiate
+conn_handler.Search_Log global log_GY_Initiate -- GY Initiate
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+
+EndTestCase Reestablish_PDP_Context
+
+
+
+

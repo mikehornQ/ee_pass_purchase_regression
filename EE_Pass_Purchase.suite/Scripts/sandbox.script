@@ -1,0 +1,86 @@
+﻿//sandbox
+// M Horn
+// December 2015
+
+setup
+ScreenUtilities.resetSearch()
+// -------------------------------
+
+setup
+DeviceDriver.setAirplaneMode
+DeviceDriver.setAirplaneModeOff
+wait 5
+PassPurchaseTests.CheckDataPack
+
+log the result
+
+// -------------------------------
+
+Setup
+
+put "{error,not_lead}[returnKey]" into mmm
+
+logwarning "Unexpected response from Erlang:" && conn_handler.strip_output(mmm)
+
+// -------------------------------
+
+Setup
+
+PassPurchaseTests.CheckDataPack
+if the result  = "Empty" then
+	log "hello"
+else
+	log "goodbye"
+end if
+
+// ------------------------------------
+load_data
+load_commands
+
+ssh_handler.loadOTP "otp"
+put conn_handler.Connect_Slate into log_procId_otp
+put log_procId_otp into global currentProc
+
+ssh_handler.sendSSHInputAndReturn("cd ebdc_core/app_logs")
+put "2015-12-03_14" into log_start_date
+put merge(global cmd_search_syslog) into my cmdline 
+ssh_handler.sendSSHInputAndReturn(my cmdline)
+
+put global sshOutput into pass_purchase
+
+if "subse_pass" is in pass_purchase then
+	logsuccess "Pass purchase found in SYSLOG file"
+else
+	logerror "Pass purchase not found in SYSLOG file. Unable to continue"
+	exit handler
+end if
+
+// exit core
+ssh_handler.exit_shell
+
+// close SSH session
+ssh_handler.close_ssh
+// ------------------------------------------
+
+setup
+load_data
+DeviceDriver.goToURLInBrowser global statusURL
+
+// ------------------------------------------
+setup
+if ImageFound(Text:"D:", ContrastColor:(2,7,8), WaitFor:8, Contrast:"On") = False then
+	logerror "Unable to identify link speed. Exiting script"	
+else
+	put ImageRectangle of foundimageinfo()  into pRectangle
+	put readtext(((topleft of pRectangle),(global Width, item 2 of bottomleft of pRectangle)),ContrastColor:(2,7,8), Contrast:"On") into readstring
+end if
+
+put () into global dwnlds
+put () into global uplds
+
+put ImageRectangle of foundimageinfo()  into monrectangle
+
+pp_handler.getSpeeds(monrectangle)
+
+log "D:" && max(global dwnlds)
+log "U:" && max(global uplds)

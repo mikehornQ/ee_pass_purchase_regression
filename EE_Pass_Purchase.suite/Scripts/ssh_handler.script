@@ -1,0 +1,111 @@
+﻿// ssh_handler - SSH handlers
+// M Horn
+// November 2015
+
+to open_ssh ssh_params
+	set username to item 1 of ssh_params
+	set hostname to item 3 of ssh_params
+	set passwd to item 2 of ssh_params
+	
+	set my hoststring to "[username]@[hostname]"
+	replace "[username]" by username in my hoststring
+	replace "[hostname]" by hostname in my hoststring
+	
+	put number of items in global handler_list + 1 into nextproc
+	put merge("ssh#[[nextproc]]" ) into procID
+	insert procID after global handler_list
+	
+	put procID into global currentProc
+	
+	open process (procID) with options (parameters:(my hoststring, "-pw", passwd))
+	set global sshOutput to getsshOutputLine()
+	put global sshOutput
+end open_ssh
+
+to open_ssh_PIT12 ssh_params
+	set username to item 1 of ssh_params
+	set hostname to item 3 of ssh_params
+	set passwd to item 2 of ssh_params
+	
+	set my hoststring to "[username]@[hostname]"
+	replace "[username]" by username in my hoststring
+	replace "[hostname]" by hostname in my hoststring
+	
+	put number of items in global handler_list + 1 into nextproc
+	put merge("ssh#[[nextproc]]" ) into procID
+	insert procID after global handler_list
+	
+	put procID into global currentProc
+	
+	open process (procID) with options (parameters:(my hoststring, "-pw", passwd, "-P 9999"))
+	set global sshOutput to getsshOutputLine()
+	put global sshOutput
+end open_ssh_PIT12
+
+to exit_shell
+
+	conn_handler.pop_eol
+	sendSSHInputAndReturn(global cmd_exit)
+	
+end exit_shell
+
+to close_ssh
+	conn_handler.pop_eol
+	sendSSHInputAndReturn(global cmd_exit)
+	conn_handler.pop_eol
+	sendSSHInputAndReturn(global cmd_exit)
+	close process (global currentProc)
+	delete the last item of global handler_list
+	put the last item of global handler_list into global currentProc	
+	
+end close_ssh
+
+function getsshOutputLine
+
+	read from process (global currentProc) until global defaultSSHendOfLine into global sshOutput in (global defaultSSHtimeout)
+	return global sshOutput
+	
+end getsshOutputLine
+
+to sendSSHInput input
+
+	write input to process (global currentProc)
+	
+end sendSSHInput
+
+to sendSSHInputAndReturn input
+
+	sendSSHInput(input)
+	sendSSHInput(return)
+	
+	set global sshOutput to getsshOutputLine()
+	put global sshOutput
+	
+end sendSSHInputAndReturn
+
+to sendSSHInputNoReturn input
+
+	sendSSHInput(input)
+	
+	set global sshOutput to getsshOutputLine()
+	put global sshOutput
+	
+end sendSSHInputNoReturn
+
+to loadOTP node
+
+	if node = "OTP" then
+		set global otp_node = global otp_node
+		set global cmd_erlang_shell to global otp_erlang_shell
+		set global erlang_delim = global otp_erlang_delim
+		set global otp_delim = global otp_delim
+		log "Loading OTP"
+	else
+		set global otp_node = global none_otp_node
+		set global cmd_erlang_shell to global none_otp_erlang_shell
+		set global erlang_delim = global none_otp_erlang_delim
+		set global otp_delim = global none_otp_delim
+		log "Loading NONE OTP"
+	end if
+	
+end loadOTP

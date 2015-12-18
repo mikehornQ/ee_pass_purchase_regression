@@ -1,0 +1,129 @@
+﻿(* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  Script generated:  2015-12-02 09:56:55
+  From session:  clear_downloads
+  Captured on:  2015-12-02 09:52:42
+  From server:  SM-G920F
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *)
+Setup
+
+TypeText HomeButton
+
+if imagefound("Home/Apps_Icon") then
+	Click FoundImageLocation()
+	
+	if imagefound(Text:"Tools", ContrastColor:(243,244,244), Contrast:"On") then
+		Click FoundImageLocation()
+	else
+		logwarning "Unable to locate Tools"
+		exit handler
+	end if
+	
+	if imagefound("Applications/MyFiles") then
+		Click FoundImageLocation()
+		
+		if imagefound (Text:"HOME", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+			click foundimagelocation()
+		end if
+		
+		if imagefound ("Applications/MyFiles/Device_Storage") then
+			Click FoundImageLocation()
+			
+			if imagefound (Text:"Download", ContrastColor:(0,0,0), Contrast:"On") then
+				Click FoundImageLocation()
+				
+				if imagefound (Text:"MORE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+					Click FoundImageLocation()
+					
+					if imagefound (Text:"Edit") then
+						Click FoundImageLocation()
+					else
+						logwarning "Unable to locate Edit"
+						exit handler
+					end if
+					
+					put everyimagelocation("Applications/select_file") into my downloads
+					
+					repeat with each item in my downloads
+						click it
+					end repeat
+					
+					if imagefound (Text:"DELETE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+						click FoundImageLocation()	
+						
+						Click (Text:"DELETE", ContrastColor:(204,136,0), WaitFor:8, Contrast:"On")
+						
+						if imagefound (Text:"DELETE") then
+							click FoundImageLocation()
+						else
+							logerror "Unable to locate DELETE"
+						end if	
+					else
+						logwarning "DELETE not available, no downloads selected for deletion?"
+					end if
+					
+					if imagefound (Text:"HOME", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+						click foundimagelocation()
+					end if
+					
+				end if --  imagefound (Text:"MORE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On")
+				
+			end if -- imagefound (Text:"Download", ContrastColor:(0,0,0), Contrast:"On")
+			
+		end if --  imagefound ("Applications/MyFiles/Device_Storage") 
+		
+		if imagefound (Text:"HOME", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+			click foundimagelocation()
+		end if
+		
+		if imagefound ("Applications/MyFiles/Download_History") then
+			Click FoundImageLocation()
+			
+			if imagefound (Text:"MORE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+				Click FoundImageLocation()
+				
+				if imagefound (Text:"Edit") then
+					Click FoundImageLocation()
+				else
+					logwarning "Unable to locate Edit"
+					exit handler
+				end if
+				
+				put everyimagelocation("Applications/select_file") into my downloads
+				
+				repeat with each item in my downloads
+					click it
+				end repeat
+				
+				if imagefound (Text:"Remove", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+					click FoundImageLocation()	
+					
+					if imagefound (Text:"DELETE") then
+						click FoundImageLocation()
+					else
+						logerror "Unable to locate DELETE"
+					end if
+				else
+					logwarning "DELETE not available, no downloads selected for deletion?"
+				end if
+				
+				if imagefound (Text:"HOME", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On") then
+					click foundimagelocation()
+				end if
+			else
+				logwarning "Unable to locate MORE"
+			end if -- imagefound (Text:"MORE", ContrastColor:(254,249,197), WaitFor:8, Contrast:"On")
+			
+		end if -- imagefound ("Applications/MyFiles/Download_History")	
+		
+	end if --  imagefound("Applications/MyFiles")
+	
+	
+end if --  imagefound("Home/Apps_Icon")
+
+DeviceDriver.openActivityCentre()
+
+Draganddrop("Samsung_S6_ac_download","Samsung_S6_ac_RHS")
+
+
+
+

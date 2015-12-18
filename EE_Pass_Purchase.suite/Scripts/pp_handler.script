@@ -1,0 +1,68 @@
+﻿// pp_handler - connectivity handler
+// M Horn
+// December 2015
+
+to getSpeeds pRectangle
+	-- requires Net Monitor Mini running on SUT with following settings:
+	--     Font Size: 20
+	--     Font: San Serif
+	--     Height: 100px
+	--     Colour: 0,0,0
+	--     Position top centre
+	
+	put readtext(((topleft of pRectangle),(global Width, item 2 of bottomleft of pRectangle)),ContrastColor:(2,7,8), Contrast:"On") into readstring
+	put split(item 1 of split(readstring,lf)," ") into linkspeed
+	put item 2 of split(item 1 of linkspeed,":") into my dwnld 
+	replace "B" with "" in my dwnld
+	-- convert KB into MB 
+	if "M" is in my dwnld then
+		replace "M" with "" in my dwnld	
+	else
+		replace "K" with "" in my dwnld
+		put (my dwnld / 1024) into my dwnld
+		
+	end if
+	insert my dwnld after global dwnlds
+	
+	put  item 2 of split(item 2 of linkspeed,":") into my upld
+	replace "B" with "" in my upld
+	-- convert KB into MB 
+	if "M" is in my upld then
+		replace "M" with "" in my upld
+	else	
+		replace "K" with "" in my upld
+		put (my upld / 1024) into my upld
+	end if	
+	insert my upld after global uplds
+	
+end getSpeeds
+
+to check_for_sms
+
+	put the searchrectangle into save_rectangle
+	ScreenUtilities.resetSearch()
+	
+	if imagefound("Messaging/Act_Centre_Message") then		
+		put foundimageinfo().imagerectangle into msgrectangle
+		put readtext(((topleft of msgrectangle),(FoundImageLocation())),ContrastColor:(68,84,99), Contrast:"On") into msgtext
+	end if
+	
+	if "80%" is in msgtext then
+		logwarning "80% of data allowance used"
+		-- open SMS to remove it from ActivityCentre
+		click FoundImageLocation()
+		-- now go back to ActivityCentre to resume test
+		DeviceDriver.openActivityCentre()
+		
+	else if "used up" is in msgtext then
+		logwarning "Data allowance used up"
+		-- open SMS to remove it from ActivityCentre
+		click FoundImageLocation()
+		-- now go back to ActivityCentre to resume test
+		DeviceDriver.openActivityCentre()
+	end if
+	
+	set the searchrectangle to save_rectangle
+	
+end check_for_sms
+
