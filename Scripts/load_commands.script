@@ -5,7 +5,7 @@
 -- shell commands
 set global cmd_vt220 to "export TERM=vt220"
 set global cmd_ls to "ls -a"
-set global cmd_su to "su - [userid]"
+set global cmd_su to "su - [[userid]]"
 set global cmd_text to "[text]"
 set global cmd_pwd to "pwd"
 set global cmd_exit to "exit"

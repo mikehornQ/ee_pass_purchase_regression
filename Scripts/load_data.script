@@ -33,9 +33,10 @@ set global otp_erlang_delim = ">"*)
 -- Defaults
 set global defaultSSHendOfLine = "$"
 set global mobile_number = "447432991399"
-set global PAYM_device = ("SM-G920F","SM-G920F (04157df455a99b1e)",5900,True) 
+set global device_id = ("SM-G920F","SM-G920F (04157df455a99b1e)",5900,True) 
 set global sevas_node = "172.17.62.52"
 set global sevas_delim = ">"
+set global initiatingNumberAliases = "7626"
 
 -- log file entries
 set global log_GX_Initiate to ("GX9I", "Gx Initiate")

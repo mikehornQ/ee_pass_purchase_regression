@@ -8,7 +8,7 @@ load_commands
 
 // connect to device
 if status of ConnectionInfo() <> "connected" then
-	Conn_Handler.Connect_SUT global PAYM_device
+	Conn_Handler.Connect_SUT global device_id
 end if
 
 
@@ -55,19 +55,19 @@ end if
 
 put () into global dwnlds
 put () into global uplds
-
+put 0 into download_count
 put ImageRectangle of foundimageinfo()  into monrectangle
 
 pp_handler.getSpeeds(monrectangle)
 
-repeat 1 times
+repeat 4 times
 	DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
-	
+	add 1 to download_count 
 	Screenutilities.searchRightQuarter()
 	repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
 		
 		pp_handler.check_for_sms 
-		if repeatindex = 1 then pp_handler.getSpeeds(monrectangle)
+		if download_count = 1 then pp_handler.getSpeeds(monrectangle)
 		Wait 5
 		if repeatIndex() > 1200 then 
 			Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"

@@ -58,6 +58,12 @@ to check_for_sms
 		logwarning "Data allowance used up"
 		-- open SMS to remove it from ActivityCentre
 		click FoundImageLocation()
+		
+		-- record the time stamp of this message for later use
+		put DeviceDriver.getLastReceivedMessageBody() into received
+		replace every occurrence of lf with " " in received.body
+		put the last item of split(received.body,"SMS") into global last_message_timestamp
+		
 		-- now go back to ActivityCentre to resume test
 		DeviceDriver.openActivityCentre()
 	end if

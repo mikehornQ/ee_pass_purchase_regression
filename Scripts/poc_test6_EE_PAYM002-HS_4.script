@@ -13,7 +13,7 @@ set_adult_content_flag
 
 // connect to device
 if status of ConnectionInfo() <> "connected" then
-	Conn_Handler.Connect_SUT global PAYM_device
+	Conn_Handler.Connect_SUT global device_id
 end if
 
 DeviceDriver.goToURLInBrowser "http://www.williamhill.com"

@@ -1,10 +1,11 @@
-﻿// poc_test8_EE_PAYM016-HS_4 -EE_PAYM029-BUS_36GB No Pass SMS.  verify that no_pass SMS is triggered only once in 24 hours for EE PAYM subscribe
+﻿// poc_test9_EE_PAYM017-HS_4 -EE_PAYM029-BUS_36GB 80% Pass SMS.  verify that 80% SMS is triggered only once in 24 hours for EE PAYM subscribe
 // M Horn
 // December 2015
 
 Setup
 load_data
 load_commands
+put "http://download.thinkbroadband.com/512MB.zip" into download_url
 
 // connect to device
 if status of ConnectionInfo() <> "connected" then
@@ -12,12 +13,12 @@ if status of ConnectionInfo() <> "connected" then
 	TypeText homeButton
 end if
 
-BeginTestCase POC8_Initial_Disconnect_Subscriber
+BeginTestCase POC9_Initial_Disconnect_Subscriber
 
 // turn on airplane mode
 DeviceDriver.setAirplaneMode
 
-EndTestCase POC8_Initial_Disconnect_Subscriber
+EndTestCase POC9_Initial_Disconnect_Subscriber
 
 wait 10 seconds
 
@@ -25,46 +26,26 @@ wait 10 seconds
 // Step 1 - Establish PDP context for EE PAYM subscriber with HS_4GB customer type.
 //
 
-BeginTestCase POC8_Establish_PDP_Context
+BeginTestCase POC9_Establish_PDP_Context
 
 // turn off airplane mode, initiate connection to network
 DeviceDriver.setAirplaneModeOff
 
-EndTestCase POC8_Establish_PDP_Context
+EndTestCase POC9_Establish_PDP_Context
 
 
 //
 // Step 2 - Exhaust allowance. 80% and 100% usage SMS should be received
 //
 
-BeginTestCase POC8_Exhaust_Allowance
+BeginTestCase POC9_Exhaust_Allowance
 
 // download data until virtual allowance is exhausted
-repeat forever
-	PassPurchaseTests.CheckDataPack
-	if the result  = "Empty" then
-		exit repeat
-	else
-		DataTests.initiateDownload "http://download.thinkbroadband.com/1GB.zip"
-		
-		Screenutilities.searchRightQuarter()
-		repeat while ImageFound("Internet/Downloads/DownloadProgress") -- Download file 
-			
-			pp_handler.check_for_sms
-			Wait 5
-			if repeatIndex() > 1200 then Report_Defect "Scripting issue", "Burn data has exceeded 10 minutes. Exiting script"
-			
-		end repeat -- Download completed
-	end if
-	
-	wait 5
-end repeat
+DataTests.BurnData 80, download_url
 
-logsuccess "Virtual data allowance exhausted"
+EndTestCase POC9_Exhaust_Allowance
 
-EndTestCase POC8_Exhaust_Allowance
-
-BeginTestCase POC8_Test_SMS
+BeginTestCase POC9_Test_SMS
 repeat 5 times
 	
 	DeviceDriver.setAirplaneMode
@@ -101,13 +82,13 @@ repeat 5 times
 		
 		replace every occurrence of lf with " " in received.body
 		
-		if not (received.body contains "used up your data") then
-			Report_Defect "Assertion Failed", format("Expected to receive a message containing: 'used up your data' Received message: '%s'",received.body)
+		if not (received.body contains "80% of data allowance used") then
+			Report_Defect "Assertion Failed", format("Expected to receive a message containing: '80% of data allowance used' Received message: '%s'",received.body)
 		end if
 		
 		put item 2 of split(received.body,"SMS") into current_timestamp
 		if current_timestamp > global last_message_timestamp then
-			logerror "Duplicate no_pass SMS received within 24 hours"
+			logerror "Duplicate 80% SMS received within 24 hours"
 		end if
 		
 	end if
@@ -115,4 +96,4 @@ repeat 5 times
 	
 end repeat
 
-EndTestCase POC8_Test_SMS
+EndTestCase POC9_Test_SMS
